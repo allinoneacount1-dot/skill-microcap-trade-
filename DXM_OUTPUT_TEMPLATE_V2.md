@@ -1,10 +1,12 @@
----
-DXM OUTPUT TEMPLATE V2 — PRIORITY-FIRST
+# DXM OUTPUT TEMPLATE V2 — PRIORITY-FIRST
+
 Menggantikan SECTION 12 di DXM V13.10-FIXED
 Urutan output baru: 6 Priority Sections → Compact Audit Trail
+
 ---
 
-SECTION 12 — OUTPUT TEMPLATE V2 (PRIORITY-FIRST)
+## SECTION 12 — OUTPUT TEMPLATE V2 (PRIORITY-FIRST)
+
 > Urutan output baru. Priority sections tampil PERTAMA — data keputusan langsung terlihat.
 > Audit Trail (data pendukung) di bawah dalam format kompres.
 > Blok 3–10 di-skip jika Signal = BLACKLIST / NO ENTRY.
@@ -143,13 +145,13 @@ SECTION 12 — OUTPUT TEMPLATE V2 (PRIORITY-FIRST)
   Tiebreaker: [jika Bull = Bear → MFI direction: naik → Bull / turun → Bear]
 
   🚨 TRAP RADAR
-  ┌────────────────────────┬───────────────────┬──────────────────────┐
-  │  🎣 FOMO Trap          │  ░░░░░░░░░░░░░░░  │  🟢 RENDAH           │
-  │  🎭 Gocek / Fake Break │  ░░░░░░░░░░░░░░░  │  🟢 RENDAH           │
-  │  🌊 Wash Candle        │  ░░░░░░░░░░░░░░░  │  🟢 TIDAK AKTIF      │
-  │  💧 Exit Liquidity     │  ████░░░░░░░░░░░  │  🟡 MEDIUM — WATCH   │
-  │  🕵️ Insider Distrib.  │  ░░░░░░░░░░░░░░░  │  🟢 TIDAK AKTIF      │
-  └────────────────────────┴───────────────────┴──────────────────────┘
+  ┌────────────────────────┬───────────────────┬────────────────────────┐
+  │  🎣 FOMO Trap          │  ░░░░░░░░░░░░░░░  │  🟢 RENDAH             │
+  │  🎭 Gocek / Fake Break │  ░░░░░░░░░░░░░░░  │  🟢 RENDAH             │
+  │  🌊 Wash Candle        │  ░░░░░░░░░░░░░░░  │  🟢 TIDAK AKTIF        │
+  │  💧 Exit Liquidity     │  ████░░░░░░░░░░░  │  🟡 MEDIUM — WATCH     │
+  │  🕵️ Insider Distrib.  │  ░░░░░░░░░░░░░░░  │  🟢 TIDAK AKTIF        │
+  └────────────────────────┴───────────────────┴────────────────────────┘
 
   Trap aktif (jika ada):
   ⚠️  [Nama trap]: [kondisi yang trigger] → [action yang harus diambil]
@@ -220,24 +222,37 @@ SECTION 12 — OUTPUT TEMPLATE V2 (PRIORITY-FIRST)
 ```
 
 ---
-CONFIDENCE BAR GUIDE (gunakan karakter █ dan ░ — 25 karakter total):
-50% = █████████████░░░░░░░░░░░░
-65% = ████████████████░░░░░░░░░
-75% = ██████████████████░░░░░░░
-85% = █████████████████████░░░░
-91% = ██████████████████████░░░
-95% = ███████████████████████░░
-100%= █████████████████████████
 
-FORWARD PROJECTION BAR GUIDE (gunakan ─ — 50 karakter total):
-25% = 🟢 BULL  ─────────────                       25%
-65% = 🟢 BULL  ─────────────────────────────────── 65%
+## CONFIDENCE BAR GUIDE
+Gunakan karakter █ dan ░ — 25 karakter total:
+
+```
+50%  = █████████████░░░░░░░░░░░░
+65%  = ████████████████░░░░░░░░░
+75%  = ██████████████████░░░░░░░
+85%  = █████████████████████░░░░
+91%  = ██████████████████████░░░
+95%  = ███████████████████████░░
+100% = █████████████████████████
+```
+
+## FORWARD PROJECTION BAR GUIDE
+Gunakan ─ — 50 karakter total:
+
+```
+25%  = 🟢 BULL  ─────────────                       25%
+65%  = 🟢 BULL  ─────────────────────────────────── 65%
+```
+
 Bar diisi proporsional dengan panjang angka %.
 
-TRAP RADAR BAR GUIDE (15 karakter per bar):
+## TRAP RADAR BAR GUIDE
+15 karakter per bar:
+
+```
 RENDAH      = ░░░░░░░░░░░░░░░  (tidak ada trigger aktif)
 LOW-MEDIUM  = ██░░░░░░░░░░░░░  (1–2 sub-kondisi aktif)
 MEDIUM      = █████░░░░░░░░░░  (3–4 sub-kondisi aktif)
 HIGH        = ██████████░░░░░  (5–6 sub-kondisi aktif)
 KRITIS      = ███████████████  (semua sub-kondisi → LAW 13 risk)
----
+```
