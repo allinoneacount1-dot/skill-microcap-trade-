@@ -255,3 +255,18 @@ Recommended workflow:
 # Example AI Prompt
 
 ```txt
+Analyze this Solana PumpFun token chart for entry quality:
+
+CHART: [SCREENSHOT]
+
+Check for:
+1. Volume expansion above SMA
+2. VWAP reclaim with hold
+3. EMA bullish structure
+4. RSI healthy range (35-70)
+5. MFI rising with volume
+6. VPVR support confirmation
+7. Smart money accumulation signs
+
+Is this a quality entry? Rate 1-10 and explain risks.
+```
