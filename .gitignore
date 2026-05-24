@@ -1,0 +1,10 @@
+# DexMultichain Site
+# Vercel + GitHub Pages compatible
+
+*.md
+LICENSE
+README.md
+.github/
+.bagus*
+DXM_*
+output_template*
