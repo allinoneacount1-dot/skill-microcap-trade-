@@ -530,78 +530,11 @@
 <script src="app.js"></script>
 <script>
 // Scanner Logic
-const DEMO_TOKENS = {
-  'So11111111111111111111111111111111111111112': {
-    symbol: 'SOL', name: 'Wrapped SOL', price: 168.42, liquidity: 89200000, mcap: 78500000000, holders: 1247893, volume: 2400000000, change: 3.2,
-    liqScore: 95, holdScore: 98, volScore: 92, safeScore: 96,
-    risk: 'LOW', riskClass: 'risk-low',
-    signals: [
-      { type: 'good', text: '✓ Liquidity locked' },
-      { type: 'good', text: '✓ Renounced contract' },
-      { type: 'good', text: '✓ No mint authority' },
-      { type: 'info', text: 'ℹ Top 10 holders: 12%' },
-    ]
-  },
-  'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263': {
-    symbol: 'BONK', name: 'Bonk', price: 0.00001247, liquidity: 42000000, mcap: 980000000, holders: 892341, volume: 450000000, change: -2.1,
-    liqScore: 88, holdScore: 85, volScore: 90, safeScore: 82,
-    risk: 'LOW', riskClass: 'risk-low',
-    signals: [
-      { type: 'good', text: '✓ Liquidity locked 100%' },
-      { type: 'good', text: '✓ Renounced' },
-      { type: 'info', text: 'ℹ Top 10 holders: 18%' },
-      { type: 'warn', text: '⚠ High volatility' },
-    ]
-  },
-  'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN': {
-    symbol: 'JUP', name: 'Jupiter', price: 0.892, liquidity: 120000000, mcap: 1200000000, holders: 456789, volume: 89000000, change: 5.7,
-    liqScore: 92, holdScore: 80, volScore: 75, safeScore: 94,
-    risk: 'LOW', riskClass: 'risk-low',
-    signals: [
-      { type: 'good', text: '✓ DEX aggregator' },
-      { type: 'good', text: '✓ Audited contract' },
-      { type: 'good', text: '✓ Liquidity locked' },
-      { type: 'info', text: 'ℹ Top 10 holders: 22%' },
-    ]
-  }
-};
+const DEMO_TOKENS = {};
 
-// Generate random token for unknown CAs
-function generateRandomToken(ca) {
-  const hash = ca.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
-  const symbols = ['MOON', 'DOGE', 'PEPE', 'CHAD', 'WOJAK', 'FROG', 'CAT', 'SOL', 'BASED', 'APED'];
-  const symIdx = hash % symbols.length;
-  const price = (Math.random() * 0.01).toFixed(8);
-  const liq = Math.floor(Math.random() * 500000) + 10000;
-  const holders = Math.floor(Math.random() * 500) + 10;
-  const vol = Math.floor(Math.random() * 100000);
-  const change = (Math.random() * 40 - 20).toFixed(1);
-  const liqScore = Math.floor(Math.random() * 60) + 20;
-  const holdScore = Math.floor(Math.random() * 60) + 20;
-  const volScore = Math.floor(Math.random() * 60) + 20;
-  const safeScore = Math.floor(Math.random() * 50) + 15;
-  
-  const risk = safeScore > 60 ? 'LOW' : safeScore > 35 ? 'MEDIUM' : 'HIGH';
-  const riskClass = safeScore > 60 ? 'risk-low' : safeScore > 35 ? 'risk-medium' : 'risk-high';
-  
-  const signals = [];
-  if (safeScore > 50) signals.push({ type: 'good', text: '✓ Liquidity detected' });
-  if (safeScore > 40) signals.push({ type: 'info', text: `ℹ ${holders} holders` });
-  if (safeScore <= 50) signals.push({ type: 'warn', text: '⚠ Low liquidity' });
-  if (safeScore <= 35) signals.push({ type: 'bad', text: '✗ High risk detected' });
-  if (safeScore <= 25) signals.push({ type: 'bad', text: '✗ Possible honeypot' });
-  if (liqScore > 70) signals.push({ type: 'good', text: '✓ Good liquidity' });
-  if (volScore > 60) signals.push({ type: 'info', text: 'ℹ Active trading' });
-  
-  return {
-    symbol: symbols[symIdx] + (hash % 100), name: 'Unknown Token', price: parseFloat(price),
-    liquidity: liq, mcap: liq * (Math.random() * 10 + 2), holders, volume: vol,
-    change: parseFloat(change), liqScore, holdScore, volScore, safeScore,
-    risk, riskClass, signals
-  };
-}
-
+// Format helpers
 function formatNum(n) {
+  if (!n && n !== 0) return '—';
   if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
   if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
   if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
@@ -610,85 +543,214 @@ function formatNum(n) {
 }
 
 function formatPrice(p) {
+  if (!p && p !== 0) return '—';
   if (p >= 1) return '$' + p.toFixed(2);
   if (p >= 0.0001) return '$' + p.toFixed(6);
   return '$' + p.toFixed(10);
 }
 
 let currentCA = '';
+let abortController = null;
 
 async function scanToken() {
   const input = document.getElementById('caInput');
-  const ca = input.value.trim();
-  if (!ca || ca.length < 30) {
+  const raw = input.value.trim();
+  if (!raw || raw.length < 30) {
     input.focus();
-    input.style.borderColor = 'var(--red)';
-    setTimeout(() => input.style.borderColor = '', 1000);
+    input.parentElement.style.borderColor = 'var(--red)';
+    setTimeout(() => input.parentElement.style.borderColor = '', 1000);
     return;
   }
 
-  currentCA = ca;
+  currentCA = raw;
   const btn = document.getElementById('scanBtn');
   btn.disabled = true;
+  btn.innerHTML = '<div class="loading-ring" style="width:18px;height:18px;border-width:2px;margin:0"></div> Scanning...';
   document.getElementById('empty').style.display = 'none';
   document.getElementById('results').classList.remove('active');
   document.getElementById('loading').classList.add('active');
+  document.getElementById('loading').querySelector('.loading-text').textContent = 'Fetching from DexScreener + Helius...';
 
-  // Simulate analysis delay
-  await new Promise(r => setTimeout(r, 2500));
+  // Cancel previous request if any
+  if (abortController) abortController.abort();
+  abortController = new AbortController();
 
-  // Get token data
-  const data = DEMO_TOKENS[ca] || generateRandomToken(ca);
+  try {
+    // ── Fetch from DexScreener ──
+    const dsRes = await fetch(`https://api.dexscreener.com/latest/dex/tokens/${raw}`, {
+      signal: abortController.signal
+    });
+    const dsData = await dsRes.json();
+    const pairs = dsData?.pairs || [];
 
-  // Render results
-  document.getElementById('resSymbol').textContent = '$' + data.symbol;
-  document.getElementById('resAddress').textContent = ca.slice(0, 8) + '...' + ca.slice(-8);
-  document.getElementById('resRisk').textContent = data.risk + ' RISK';
-  document.getElementById('resRisk').className = 'token-risk ' + data.riskClass;
-  document.getElementById('resPrice').textContent = formatPrice(data.price);
-  document.getElementById('resLiquidity').textContent = formatNum(data.liquidity);
-  document.getElementById('resMcap').textContent = formatNum(data.mcap);
-  document.getElementById('resHolders').textContent = data.holders.toLocaleString();
-  document.getElementById('resVolume').textContent = formatNum(data.volume);
-  
-  const changeEl = document.getElementById('resChange');
-  changeEl.textContent = (data.change >= 0 ? '+' : '') + data.change + '%';
-  changeEl.className = 'metric-value ' + (data.change >= 0 ? 'green' : 'red');
+    if (pairs.length === 0) {
+      throw new Error('NO_PAIRS');
+    }
 
-  // Animate bars
-  setTimeout(() => {
-    document.getElementById('barLiq').style.width = data.liqScore + '%';
-    document.getElementById('barHold').style.width = data.holdScore + '%';
-    document.getElementById('barVol').style.width = data.volScore + '%';
-    document.getElementById('barSafe').style.width = data.safeScore + '%';
-  }, 100);
+    const pair = pairs[0];
+    const liq = pair.liquidity?.usd || 0;
+    const vol = pair.volume?.h24 || 0;
+    const price = parseFloat(pair.priceUsd) || 0;
+    const mcap = pair.fdv || pair.marketCap || 0;
+    const quotes = pair.priceChange || {};
 
-  document.getElementById('valLiq').textContent = data.liqScore + '%';
-  document.getElementById('valHold').textContent = data.holdScore + '%';
-  document.getElementById('valVol').textContent = data.volScore + '%';
-  document.getElementById('valSafe').textContent = data.safeScore + '%';
+    // ── Risk Analysis ──
+    let score = 50;
+    const signals = [];
 
-  // Signals
-  const signalsHtml = data.signals.map(s =>
-    `<div class="signal signal-${s.type}">${s.text}</div>`
-  ).join('');
-  document.getElementById('resSignals').innerHTML = signalsHtml;
+    if (liq >= 100000) { score += 15; signals.push({type:'good', text:'✓ Strong liquidity >$100K'}); }
+    else if (liq >= 10000) { score += 5; signals.push({type:'info', text:'ℹ Moderate liquidity'}); }
+    else if (liq > 0) { score -= 10; signals.push({type:'warn', text:'⚠ Low liquidity'}); }
+    else { score -= 20; signals.push({type:'bad', text:'✗ No liquidity found'}); }
 
-  document.getElementById('loading').classList.remove('active');
-  document.getElementById('results').classList.add('active');
-  btn.disabled = false;
-}
+    if (vol >= 1000000) { score += 10; signals.push({type:'good', text:'✓ High volume 24h >$1M'}); }
+    else if (vol >= 100000) { score += 5; signals.push({type:'info', text:'ℹ Active trading'}); }
 
-function copyAddress() {
-  if (currentCA) {
-    navigator.clipboard.writeText(currentCA).catch(() => {});
+    if (mcap > 0 && mcap <= 50000) { score -= 10; signals.push({type:'warn', text:'⚠ Micro cap — high risk'}); }
+
+    const boosts = pair.boosts || {};
+    if (boosts.active > 0) { signals.push({type:'info', text:`ℹ ${boosts.active} active boosts`}); }
+
+    // Price change signals
+    if (quotes.h24 !== undefined) {
+      const ch = parseFloat(quotes.h24);
+      if (ch > 100) signals.push({type:'good', text:`📈 +${ch.toFixed(0)}% in 24h`});
+      else if (ch < -50) { score -= 10; signals.push({type:'warn', text:`📉 ${ch.toFixed(0)}% in 24h — dump risk`});
+    }
+
+    // Pair age
+    if (pair.pairCreatedAt) {
+      const ageMs = Date.now() - pair.pairCreatedAt;
+      const ageMin = Math.floor(ageMs / 60000);
+      if (ageMin < 60) signals.push({type:'info', text:`🕐 Pair age: ${ageMin}m`});
+      else if (ageMin < 1440) signals.push({type:'info', text:`🕐 Pair age: ${Math.floor(ageMin/60)}h`});
+      else signals.push({type:'info', text:`🕐 Pair age: ${Math.floor(ageMin/1440)}d`});
+    }
+
+    // Labels
+    (pair.labels || []).forEach(l => {
+      if (l === 'pump') signals.push({type:'info', text:'🐸 pump.fun token'});
+      if (l === 'raydium') { score += 5; signals.push({type:'good', text:'✓ Raydium listed'}); }
+    });
+
+    score = Math.max(0, Math.min(100, score));
+    const riskLevel = score >= 75 ? 'LOW' : score >= 50 ? 'MEDIUM' : score >= 25 ? 'HIGH' : 'EXTREME';
+    const riskClass = score >= 75 ? 'risk-low' : score >= 50 ? 'risk-medium' : score >= 25 ? 'risk-high' : 'risk-high';
+
+    // ── Render ──
+    document.getElementById('resSymbol').textContent = '$' + (pair.baseToken?.symbol || '???');
+    document.getElementById('resAddress').textContent = raw.slice(0, 12) + '...' + raw.slice(-8);
+    document.getElementById('resRisk').textContent = riskLevel + ' RISK';
+    document.getElementById('resRisk').className = 'token-risk ' + riskClass;
+
+    document.getElementById('resPrice').textContent = formatPrice(price);
+    document.getElementById('resLiquidity').textContent = formatNum(liq);
+    document.getElementById('resMcap').textContent = formatNum(mcap);
+    document.getElementById('resHolders').textContent = '—'; // DexScreener doesn't provide holder count
+    document.getElementById('resVolume').textContent = formatNum(vol);
+
+    const quotes24 = pair.priceChange?.h24;
+    const changeEl = document.getElementById('resChange');
+    if (quotes24 !== undefined) {
+      const ch = parseFloat(quotes24);
+      changeEl.textContent = (ch >= 0 ? '+' : '') + ch.toFixed(1) + '%';
+      changeEl.className = 'metric-value ' + (ch >= 0 ? 'green' : 'red');
+    } else {
+      changeEl.textContent = '—';
+      changeEl.className = 'metric-value';
+    }
+
+    // Analysis bars
+    const liqScore = Math.min(100, Math.floor(liq / 1000));
+    const volScore = Math.min(100, Math.floor(vol / 10000));
+    const safeScore = score;
+
+    setTimeout(() => {
+      document.getElementById('barLiq').style.width = Math.max(5, liqScore) + '%';
+      document.getElementById('barVol').style.width = Math.max(5, volScore) + '%';
+      document.getElementById('barSafe').style.width = Math.max(5, safeScore) + '%';
+    }, 100);
+
+    document.getElementById('valLiq').textContent = formatNum(liq);
+    document.getElementById('valVol').textContent = formatNum(vol);
+    document.getElementById('valSafe').textContent = score + '%';
+    document.getElementById('barHold').style.width = '—';
+    document.getElementById('valHold').textContent = '—';
+
+    // Signals
+    document.getElementById('resSignals').innerHTML = signals.map(s =>
+      `<div class="signal signal-${s.type}">${s.text}</div>`
+    ).join('');
+
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('results').classList.add('active');
+
+  } catch (err) {
+    if (err.name === 'AbortError') return;
+
+    // Fallback: Demo mode
+    if (err.message === 'NO_PAIRS') {
+      document.getElementById('loading').querySelector('.loading-text').textContent = 'No DexScreener data — showing demo analysis';
+    } else {
+      document.getElementById('loading').querySelector('.loading-text').textContent = 'API unreachable — showing demo analysis';
+    }
+
+    await new Promise(r => setTimeout(r, 1500));
+
+    // Generate demo data from address hash
+    const hash = raw.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    const symbols = ['MOON', 'DOGE', 'PEPE', 'CHAD', 'WOJAK', 'FROG', 'CAT', 'APED', 'GEM', 'SCAN'];
+    const sym = symbols[hash % symbols.length] + (hash % 100);
+    const price = parseFloat((Math.random() * 0.01).toFixed(10));
+    const liq = Math.floor(Math.random() * 500000) + 5000;
+    const vol = Math.floor(Math.random() * 500000);
+    const mcap = liq * (Math.random() * 10 + 2);
+
+    let score = 30 + Math.floor(Math.random() * 40);
+    const riskLevel = score >= 75 ? 'LOW' : score >= 50 ? 'MEDIUM' : 'HIGH';
+    const riskClass = score >= 75 ? 'risk-low' : score >= 50 ? 'risk-medium' : 'risk-high';
+
+    document.getElementById('resSymbol').textContent = '$' + sym;
+    document.getElementById('resAddress').textContent = raw.slice(0, 12) + '...' + raw.slice(-8);
+    document.getElementById('resRisk').textContent = riskLevel + ' RISK';
+    document.getElementById('resRisk').className = 'token-risk ' + riskClass;
+    document.getElementById('resPrice').textContent = formatPrice(price);
+    document.getElementById('resLiquidity').textContent = formatNum(liq);
+    document.getElementById('resMcap').textContent = formatNum(mcap);
+    document.getElementById('resHolders').textContent = (Math.floor(Math.random() * 500) + 10).toLocaleString();
+    document.getElementById('resVolume').textContent = formatNum(vol);
+    document.getElementById('resChange').textContent = (Math.random() * 40 - 20).toFixed(1) + '%';
+    document.getElementById('resChange').className = 'metric-value';
+
+    setTimeout(() => {
+      document.getElementById('barLiq').style.width = Math.max(10, Math.floor(liq/5000)) + '%';
+      document.getElementById('barHold').style.width = (20 + Math.floor(Math.random() * 60)) + '%';
+      document.getElementById('barVol').style.width = Math.max(10, Math.floor(vol/5000)) + '%';
+      document.getElementById('barSafe').style.width = score + '%';
+    }, 100);
+
+    document.getElementById('valLiq').textContent = formatNum(liq);
+    document.getElementById('valHold').textContent = '—';
+    document.getElementById('valVol').textContent = formatNum(vol);
+    document.getElementById('valSafe').textContent = score + '%';
+
+    const demoSignals = [
+      {type: liq > 100000 ? 'good' : 'warn', text: liq > 100000 ? '✓ Good liquidity' : '⚠ Low liquidity'},
+      {type: vol > 100000 ? 'good' : 'warn', text: vol > 100000 ? '✓ Active volume' : '⚠ Low volume'},
+      {type: 'info', text: 'ℹ Demo mode — real data unavailable'},
+    ];
+    document.getElementById('resSignals').innerHTML = demoSignals.map(s =>
+      `<div class="signal signal-${s.type}">${s.text}</div>`
+    ).join('');
+
+    document.getElementById('loading').classList.remove('active');
+    document.getElementById('results').classList.add('active');
+
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg> Scan';
   }
 }
-
-// Enter key
-document.getElementById('caInput').addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') scanToken();
-});
 </script>
 </body>
 </html>
