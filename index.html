@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DexMultichain — Alpha Community</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #1a1a24;
+  --border: #2a2a3a;
+  --text: #e8e8f0;
+  --text2: #8888a0;
+  --accent: #7c5cfc;
+  --accent2: #5c9cfc;
+  --green: #00d68f;
+  --red: #ff4757;
+  --yellow: #ffa502;
+  --glow: rgba(124, 92, 252, 0.15);
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* Animated background */
+.bg-grid {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-image:
+    linear-gradient(rgba(124,92,252,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(124,92,252,0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.bg-glow {
+  position: fixed;
+  width: 600px; height: 600px;
+  border-radius: 50%;
+  filter: blur(120px);
+  opacity: 0.3;
+  z-index: 0;
+  pointer-events: none;
+}
+.glow-1 { top: -200px; left: -200px; background: var(--accent); }
+.glow-2 { bottom: -200px; right: -200px; background: var(--accent2); }
+
+/* Nav */
+nav {
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  z-index: 100;
+  padding: 16px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(10,10,15,0.8);
+  backdrop-filter: blur(20px);
+  border-bottom: 1px solid var(--border);
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 1.3rem;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.5px;
+}
+
+.logo span { color: var(--text2); font-weight: 400; font-size: 0.75rem; display: block; }
+
+.nav-links { display: flex; gap: 32px; align-items: center; }
+.nav-links a {
+  color: var(--text2);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+.nav-links a:hover { color: var(--text); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition: all 0.3s;
+  cursor: pointer;
+  border: none;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), #6c4ce0);
+  color: white;
+  box-shadow: 0 4px 20px rgba(124,92,252,0.3);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(124,92,252,0.5);
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+.btn-outline:hover {
+  border-color: var(--accent);
+  background: var(--glow);
+}
+
+/* Hero */
+.hero {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 120px 40px 80px;
+}
+
+.hero-content { max-width: 800px; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 100px;
+  background: var(--glow);
+  border: 1px solid rgba(124,92,252,0.3);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--accent);
+  margin-bottom: 32px;
+}
+
+.badge .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--green);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+h1 {
+  font-size: clamp(2.5rem, 6vw, 4.5rem);
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: -2px;
+  margin-bottom: 24px;
+}
+
+h1 .gradient {
+  background: linear-gradient(135deg, var(--accent), var(--accent2), var(--green));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hero-desc {
+  font-size: 1.15rem;
+  color: var(--text2);
+  max-width: 560px;
+  margin: 0 auto 40px;
+  line-height: 1.7;
+}
+
+.hero-buttons {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hero-stats {
+  display: flex;
+  gap: 48px;
+  justify-content: center;
+  margin-top: 60px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border);
+}
+
+.stat-num {
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(135deg, var(--text), var(--text2));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.stat-label {
+  font-size: 0.8rem;
+  color: var(--text2);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Section */
+section {
+  position: relative;
+  z-index: 1;
+  padding: 100px 40px;
+}
+
+.section-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.section-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--accent);
+  margin-bottom: 16px;
+}
+
+h2 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -1px;
+  margin-bottom: 20px;
+}
+
+.section-desc {
+  color: var(--text2);
+  font-size: 1.05rem;
+  max-width: 600px;
+  margin-bottom: 48px;
+}
+
+/* Features grid */
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+}
+
+.feature-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 32px;
+  transition: all 0.3s;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.feature-card:hover {
+  border-color: rgba(124,92,252,0.3);
+  transform: translateY(-4px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.feature-card:hover::before { opacity: 1; }
+
+.feature-icon {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  margin-bottom: 20px;
+}
+
+.feature-card h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.feature-card p {
+  color: var(--text2);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+/* Trenches section */
+.trenches {
+  background: var(--bg2);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.trenches-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 20px;
+}
+
+.trench-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px 24px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: all 0.3s;
+}
+
+.trench-item:hover {
+  border-color: var(--accent);
+  background: var(--glow);
+}
+
+.trench-emoji { font-size: 1.8rem; }
+
+.trench-text h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.trench-text p {
+  font-size: 0.8rem;
+  color: var(--text2);
+}
+
+/* Alpha feed */
+.alpha-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.alpha-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: all 0.3s;
+}
+
+.alpha-item:hover {
+  border-color: rgba(124,92,252,0.3);
+}
+
+.alpha-tag {
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  white-space: nowrap;
+}
+
+.tag-hot { background: rgba(255,71,87,0.15); color: var(--red); }
+.tag-alpha { background: rgba(124,92,252,0.15); color: var(--accent); }
+.tag-alert { background: rgba(255,165,2,0.15); color: var(--yellow); }
+.tag-green { background: rgba(0,214,143,0.15); color: var(--green); }
+
+.alpha-content h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.alpha-content p {
+  font-size: 0.85rem;
+  color: var(--text2);
+}
+
+.alpha-time {
+  font-size: 0.75rem;
+  color: var(--text2);
+  white-space: nowrap;
+  margin-left: auto;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+/* CTA */
+.cta-section {
+  text-align: center;
+  padding: 120px 40px;
+}
+
+.cta-box {
+  background: linear-gradient(135deg, rgba(124,92,252,0.1), rgba(92,156,252,0.1));
+  border: 1px solid rgba(124,92,252,0.2);
+  border-radius: 32px;
+  padding: 80px 40px;
+  max-width: 700px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta-box::before {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  background: radial-gradient(circle, rgba(124,92,252,0.05) 0%, transparent 70%);
+  animation: rotate 20s linear infinite;
+}
+
+@keyframes rotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.cta-box > * { position: relative; z-index: 1; }
+
+.cta-box h2 { margin-bottom: 16px; }
+.cta-box p { color: var(--text2); margin-bottom: 32px; font-size: 1.05rem; }
+
+.social-links {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  margin-top: 32px;
+}
+
+.social-link {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  color: var(--text2);
+  text-decoration: none;
+  font-size: 1.2rem;
+  transition: all 0.3s;
+}
+
+.social-link:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+  transform: translateY(-3px);
+}
+
+/* Footer */
+footer {
+  position: relative;
+  z-index: 1;
+  padding: 40px;
+  border-top: 1px solid var(--border);
+  text-align: center;
+}
+
+footer p {
+  color: var(--text2);
+  font-size: 0.85rem;
+}
+
+footer .disclaimer {
+  font-size: 0.7rem;
+  color: var(--text2);
+  opacity: 0.5;
+  margin-top: 12px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  nav { padding: 12px 20px; }
+  .nav-links { gap: 16px; }
+  .nav-links a:not(.btn) { display: none; }
+  .hero { padding: 100px 20px 60px; }
+  .hero-stats { gap: 24px; }
+  .stat-num { font-size: 1.5rem; }
+  section { padding: 60px 20px; }
+  .cta-box { padding: 48px 24px; }
+}
+
+/* Scroll animations */
+.fade-up {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: all 0.6s ease;
+}
+.fade-up.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+</style>
+</head>
+<body>
+
+<div class="bg-grid"></div>
+<div class="bg-glow glow-1"></div>
+<div class="bg-glow glow-2"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="logo">
+    DexMultichain
+    <span>Alpha Community</span>
+  </div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#trenches">Trenches</a>
+    <a href="#alpha">Alpha</a>
+    <a href="https://t.me/DexMultichain" class="btn btn-primary" target="_blank">🔥 Join Telegram</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-content">
+    <div class="badge">
+      <span class="dot"></span>
+      Live on Solana
+    </div>
+    <h1>
+      Survive the Trenches.<br>
+      <span class="gradient">Find Alpha First.</span>
+    </h1>
+    <p class="hero-desc">
+      DexMultichain is a Solana-first alpha community. We snipe liquidity, 
+      rotate smart, and share real-time calls. No sugarcoating — just raw alpha.
+    </p>
+    <div class="hero-buttons">
+      <a href="https://t.me/DexMultichain" class="btn btn-primary" target="_blank">
+        🚀 Join the Channel
+      </a>
+      <a href="https://t.me/DxMZone" class="btn btn-outline" target="_blank">
+        💬 Enter the Trenches
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num" id="stat-members">5K+</div>
+        <div class="stat-label">Members</div>
+      </div>
+      <div>
+        <div class="stat-num" id="stat-calls">200+</div>
+        <div class="stat-label">Alpha Calls</div>
+      </div>
+      <div>
+        <div class="stat-num" id="stat-wins">85%</div>
+        <div class="stat-label">Win Rate</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="section-inner">
+    <div class="section-label">Why Us</div>
+    <h2>Built for <span class="gradient">Trench Warriors</span></h2>
+    <p class="section-desc">We don't chase pumps. We find them before they happen.</p>
+    <div class="features-grid">
+      <div class="feature-card fade-up">
+        <div class="feature-icon" style="background:rgba(124,92,252,0.15)">🔥</div>
+        <h3>Liquidity Sniping</h3>
+        <p>Real-time detection of new liquidity pools on Solana. We're in before the crowd.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon" style="background:rgba(0,214,143,0.15)">⚡</div>
+        <h3>Smart Rotation</h3>
+        <p>Capital flows where alpha is. We rotate fast — no diamond hands in dead plays.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon" style="background:rgba(255,71,87,0.15)">🪖</div>
+        <h3>Rug Protection</h3>
+        <p>Dev behavior analysis, contract checks, and liquidity lock verification before every call.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon" style="background:rgba(92,156,252,0.15)">🐍</div>
+        <h3>Fast Execution</h3>
+        <p>Seconds matter in microcaps. Our alerts are instant — Telegram + on-chain triggers.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon" style="background:rgba(255,165,2,0.15)">💎</div>
+        <h3>Gem Discovery</h3>
+        <p>Low-cap gems with 10-100x potential. We do the research so you don't have to.</p>
+      </div>
+      <div class="feature-card fade-up">
+        <div class="feature-icon" style="background:rgba(124,92,252,0.15)">📊</div>
+        <h3>Transparent Calls</h3>
+        <p>Entry, TP, SL — every call is documented. Wins AND losses. No deleted messages.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TRENCHES -->
+<section id="trenches" class="trenches">
+  <div class="section-inner">
+    <div class="section-label">The Trenches</div>
+    <h2>What We <span class="gradient">Actually Do</span></h2>
+    <p class="section-desc">This is not a moon-boy community. This is a war room.</p>
+    <div class="trenches-grid">
+      <div class="trench-item fade-up">
+        <div class="trench-emoji">🎯</div>
+        <div class="trench-text">
+          <h4>Pre-Launch Snipes</h4>
+          <p>Get in before liquidity goes live</p>
+        </div>
+      </div>
+      <div class="trench-item fade-up">
+        <div class="trench-emoji">🔍</div>
+        <div class="trench-text">
+          <h4>Dev Wallet Tracking</h4>
+          <p>Follow the smart money on-chain</p>
+        </div>
+      </div>
+      <div class="trench-item fade-up">
+        <div class="trench-emoji">🛡️</div>
+        <div class="trench-text">
+          <h4>Rug Pull Detection</h4>
+          <p>Contract analysis before every call</p>
+        </div>
+      </div>
+      <div class="trench-item fade-up">
+        <div class="trench-emoji">📈</div>
+        <div class="trench-text">
+          <h4>Entry / TP / SL</h4>
+          <p>Every call has clear levels</p>
+        </div>
+      </div>
+      <div class="trench-item fade-up">
+        <div class="trench-emoji">⚡</div>
+        <div class="trench-text">
+          <h4>Instant Alerts</h4>
+          <p>Telegram push + on-chain triggers</p>
+        </div>
+      </div>
+      <div class="trench-item fade-up">
+        <div class="trench-emoji">🧠</div>
+        <div class="trench-text">
+          <h4>Market Intel</h4>
+          <p>Narrative tracking & sector rotation</p>
+        </div>
+      </div>
+      <div class="trench-item fade-up">
+        <div class="trench-emoji">💬</div>
+        <div class="trench-text">
+          <h4>Active Discussion</h4>
+          <p>Real traders, real talk, no shills</p>
+        </div>
+      </div>
+      <div class="trench-item fade-up">
+        <div class="trench-emoji">🏆</div>
+        <div class="trench-text">
+          <h4>Call History</h4>
+          <p>Full transparency on every call</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ALPHA FEED -->
+<section id="alpha">
+  <div class="section-inner">
+    <div class="section-label">Live Alpha</div>
+    <h2>Recent <span class="gradient">Calls</span></h2>
+    <p class="section-desc">Real calls. Real results. Updated in real-time.</p>
+    <div class="alpha-feed">
+      <div class="alpha-item fade-up">
+        <span class="alpha-tag tag-hot">🔥 HOT</span>
+        <div class="alpha-content">
+          <h4>$BONKAI — 47x 🚀</h4>
+          <p>Entry: $0.00012 → TP3: $0.00564 | Liquidity snipe, dev locked 90d</p>
+        </div>
+        <span class="alpha-time">2h ago</span>
+      </div>
+      <div class="alpha-item fade-up">
+        <span class="alpha-tag tag-alpha">ALPHA</span>
+        <div class="alpha-content">
+          <h4>$SOLGEM — 12x 💎</h4>
+          <p>Entry: $0.0008 → TP2: $0.0096 | Narrative play on AI x Solana</p>
+        </div>
+        <span class="alpha-time">5h ago</span>
+      </div>
+      <div class="alpha-item fade-up">
+        <span class="alpha-tag tag-green">✅ HIT</span>
+        <div class="alpha-content">
+          <h4>$MEMEX — 8x ✅</h4>
+          <p>Entry: $0.002 → TP3: $0.016 | Community gem, strong dev</p>
+        </div>
+        <span class="alpha-time">1d ago</span>
+      </div>
+      <div class="alpha-item fade-up">
+        <span class="alpha-tag tag-alert">⚠️ ALERT</span>
+        <div class="alpha-content">
+          <h4>Market Update: BTC consolidating</h4>
+          <p>Watch $74K support. Altseason rotation incoming. Stay sharp.</p>
+        </div>
+        <span class="alpha-time">3h ago</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="cta-box">
+    <h2>Ready to <span class="gradient">Survive?</span></h2>
+    <p>Join 5,000+ trench warriors getting alpha first. No VCs. No insider games. Just raw calls.</p>
+    <div class="hero-buttons">
+      <a href="https://t.me/DexMultichain" class="btn btn-primary" target="_blank">
+        🚀 Join @DexMultichain
+      </a>
+      <a href="https://t.me/DxMZone" class="btn btn-outline" target="_blank">
+        💬 @DxMZone Group
+      </a>
+    </div>
+    <div class="social-links">
+      <a href="https://x.com/vaultmarco" class="social-link" target="_blank" title="X / Twitter">𝕏</a>
+      <a href="https://t.me/DexMultichain" class="social-link" target="_blank" title="Telegram Channel">📢</a>
+      <a href="https://t.me/DxMZone" class="social-link" target="_blank" title="Telegram Group">💬</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 DexMultichain — Alpha Community</p>
+  <p class="disclaimer">DYOR | Not financial advice. Crypto trading involves substantial risk of loss.</p>
+</footer>
+
+<script>
+// Scroll animations
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.1 });
+
+document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+// Counter animation
+function animateCounter(el, target) {
+  let current = 0;
+  const increment = target / 60;
+  const timer = setInterval(() => {
+    current += increment;
+    if (current >= target) { current = target; clearInterval(timer); }
+    el.textContent = Math.floor(current).toLocaleString() + (el.dataset.suffix || '');
+  }, 30);
+}
+
+setTimeout(() => {
+  const stats = document.querySelectorAll('.stat-num');
+  if (stats[0]) { stats[0].dataset.suffix = '+'; animateCounter(stats[0], 5000); }
+  if (stats[1]) { stats[1].dataset.suffix = '+'; animateCounter(stats[1], 200); }
+  if (stats[2]) { stats[2].dataset.suffix = '%'; animateCounter(stats[2], 85); }
+}, 500);
+</script>
+</body>
+</html>
