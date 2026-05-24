@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DxM Scanner — Token Analysis</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+/* Scanner-specific overrides and additions */
+.scanner-page { padding-top: 92px; min-height: 100vh; }
+.scanner-page .navbar { background: rgba(6,6,12,0.9); backdrop-filter: blur(20px); border-bottom: 1px solid var(--border); }
+
+.scanner-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 40px 40px 100px;
+  position: relative;
+  z-index: 2;
+}
+
+.scanner-header {
+  text-align: center;
+  margin-bottom: 48px;
+}
+
+.scanner-header h1 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  font-weight: 700;
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+}
+
+.scanner-header p {
+  color: var(--text2);
+  font-size: 0.95rem;
+}
+
+/* Search */
+.search-box {
+  position: relative;
+  margin-bottom: 48px;
+}
+
+.search-input-wrap {
+  display: flex;
+  gap: 12px;
+  background: rgba(12,12,22,0.8);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 8px 8px 8px 24px;
+  transition: all var(--transition);
+  backdrop-filter: blur(20px);
+}
+
+.search-input-wrap:focus-within {
+  border-color: rgba(124,92,252,0.4);
+  box-shadow: 0 0 40px rgba(124,92,252,0.08), 0 0 0 1px rgba(124,92,252,0.15);
+}
+
+.search-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text3);
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  padding: 16px 0;
+  min-width: 0;
+}
+
+.search-input::placeholder {
+  color: var(--text3);
+  font-family: 'Inter', sans-serif;
+}
+
+.search-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, var(--accent), #6c4ce0);
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all var(--transition);
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.search-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(124,92,252,0.4);
+}
+
+.search-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.search-hint {
+  margin-top: 12px;
+  font-size: 0.78rem;
+  color: var(--text3);
+  text-align: center;
+}
+
+/* Loading */
+.scanner-loading {
+  display: none;
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.scanner-loading.active { display: block; }
+
+.loading-ring {
+  width: 48px; height: 48px;
+  border: 3px solid rgba(124,92,252,0.1);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  margin: 0 auto 24px;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+  color: var(--text2);
+  font-size: 0.9rem;
+}
+
+.loading-dots::after {
+  content: '';
+  animation: dots 1.5s steps(4, end) infinite;
+}
+
+@keyframes dots {
+  0% { content: ''; }
+  25% { content: '.'; }
+  50% { content: '..'; }
+  75% { content: '...'; }
+  100% { content: ''; }
+}
+
+/* Results */
+.scanner-results {
+  display: none;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.scanner-results.active { display: flex; }
+
+/* Token Card */
+.token-card {
+  background: rgba(12,12,22,0.7);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  backdrop-filter: blur(20px);
+  animation: slideUp 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.token-header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 28px 32px;
+  border-bottom: 1px solid var(--border);
+}
+
+.token-symbol {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.token-address {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  color: var(--text2);
+  margin-top: 2px;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.token-address:hover { color: var(--accent); }
+
+.token-risk {
+  margin-left: auto;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.risk-low { background: rgba(0,214,143,0.1); color: var(--green); }
+.risk-medium { background: rgba(255,165,2,0.1); color: var(--yellow); }
+.risk-high { background: rgba(255,71,87,0.1); color: var(--red); }
+
+.token-body {
+  padding: 28px 32px;
+}
+
+.token-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 24px;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.metric-label {
+  font-size: 0.72rem;
+  color: var(--text3);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.metric-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.metric-value.green { color: var(--green); }
+.metric-value.red { color: var(--red); }
+
+/* Analysis bars */
+.token-analysis {
+  margin-top: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.analysis-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.analysis-label {
+  font-size: 0.82rem;
+  color: var(--text2);
+  min-width: 120px;
+  font-weight: 500;
+}
+
+.analysis-bar {
+  flex: 1;
+  height: 6px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.analysis-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 1s cubic-bezier(0.22, 1, 0.36, 1);
+  width: 0%;
+}
+
+.analysis-fill.fill-purple { background: linear-gradient(90deg, var(--accent), var(--accent3)); }
+.analysis-fill.fill-green { background: linear-gradient(90deg, var(--green), #00f5a0); }
+.analysis-fill.fill-blue { background: linear-gradient(90deg, var(--accent2), #7cb5ff); }
+.analysis-fill.fill-yellow { background: linear-gradient(90deg, var(--yellow), #ffc542); }
+
+.analysis-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.82rem;
+  color: var(--text);
+  font-weight: 600;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* Signals */
+.token-signals {
+  margin-top: 28px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.signals-title {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text2);
+  margin-bottom: 16px;
+}
+
+.signals-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.signal {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.signal-good { background: rgba(0,214,143,0.08); color: var(--green); }
+.signal-warn { background: rgba(255,165,2,0.08); color: var(--yellow); }
+.signal-bad { background: rgba(255,71,87,0.08); color: var(--red); }
+.signal-info { background: rgba(92,156,252,0.08); color: var(--accent2); }
+
+/* No results */
+.scanner-empty {
+  text-align: center;
+  padding: 80px 20px;
+  color: var(--text3);
+}
+
+.scanner-empty svg {
+  margin-bottom: 20px;
+  opacity: 0.3;
+}
+
+.scanner-empty p {
+  font-size: 0.9rem;
+}
+
+/* Scanner nav back */
+.scanner-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text2);
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-bottom: 24px;
+  transition: color var(--transition-fast);
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  padding: 0;
+}
+
+.scanner-back:hover { color: var(--accent); }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .scanner-container { padding: 24px 20px 80px; }
+  .search-input-wrap { flex-wrap: wrap; padding: 8px; }
+  .search-btn { width: 100%; justify-content: center; }
+  .token-header { flex-wrap: wrap; padding: 20px; }
+  .token-body { padding: 20px; }
+  .token-metrics { grid-template-columns: repeat(2, 1fr); gap: 16px; }
+  .analysis-label { min-width: 90px; font-size: 0.75rem; }
+}
+</style>
+</head>
+<body class="scanner-page">
+
+<!-- Background -->
+<div class="bg-mesh">
+  <div class="mesh-orb mesh-orb-1"></div>
+  <div class="mesh-orb mesh-orb-2"></div>
+</div>
+<canvas id="particleCanvas"></canvas>
+<div class="noise-overlay"></div>
+
+<!-- Nav -->
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="logo">
+      <span class="logo-icon">◈</span>
+      <span class="logo-text">Dex<span class="logo-highlight">Multichain</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html#features">Features</a>
+      <a href="index.html#alpha">Alpha</a>
+      <a href="index.html#community">Community</a>
+      <a href="scanner.html" class="nav-cta">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        Scanner
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- Scanner -->
+<div class="scanner-container">
+  <button class="scanner-back" onclick="window.location='index.html'">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+    Back to Home
+  </button>
+
+  <div class="scanner-header">
+    <h1>◈ Token Scanner</h1>
+    <p>Paste a Solana contract address to analyze risk, liquidity, and holder data</p>
+  </div>
+
+  <div class="search-box">
+    <div class="search-input-wrap">
+      <div class="search-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 7h-9M14 17H3"/><circle cx="12" cy="7" r="4" transform="rotate(90 12 7)"/><circle cx="9" cy="17" r="4" transform="rotate(90 9 17)"/></svg>
+      </div>
+      <input type="text" class="search-input" id="caInput" placeholder="Paste Solana CA (e.g., So11111111111111111111111111111111111111112)" autocomplete="off" spellcheck="false">
+      <button class="search-btn" id="scanBtn" onclick="scanToken()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        Scan
+      </button>
+    </div>
+    <p class="search-hint">Powered by Helius RPC + DexScreener API • Analysis in ~30 seconds</p>
+  </div>
+
+  <!-- Loading -->
+  <div class="scanner-loading" id="loading">
+    <div class="loading-ring"></div>
+    <div class="loading-text">Analyzing on-chain data<span class="loading-dots"></span></div>
+  </div>
+
+  <!-- Results -->
+  <div class="scanner-results" id="results">
+    <div class="token-card" id="tokenCard">
+      <div class="token-header">
+        <div>
+          <div class="token-symbol" id="resSymbol">$UNKNOWN</div>
+          <div class="token-address" id="resAddress" onclick="copyAddress()">Click to copy address</div>
+        </div>
+        <div class="token-risk" id="resRisk">—</div>
+      </div>
+      <div class="token-body">
+        <div class="token-metrics" id="resMetrics">
+          <div class="metric">
+            <div class="metric-label">Price</div>
+            <div class="metric-value" id="resPrice">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Liquidity</div>
+            <div class="metric-value" id="resLiquidity">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Market Cap</div>
+            <div class="metric-value" id="resMcap">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">Holders</div>
+            <div class="metric-value" id="resHolders">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">24h Volume</div>
+            <div class="metric-value" id="resVolume">—</div>
+          </div>
+          <div class="metric">
+            <div class="metric-label">24h Change</div>
+            <div class="metric-value" id="resChange">—</div>
+          </div>
+        </div>
+
+        <div class="token-analysis">
+          <div class="analysis-row">
+            <span class="analysis-label">Liquidity</span>
+            <div class="analysis-bar"><div class="analysis-fill fill-purple" id="barLiq"></div></div>
+            <span class="analysis-value" id="valLiq">—</span>
+          </div>
+          <div class="analysis-row">
+            <span class="analysis-label">Holders</span>
+            <div class="analysis-bar"><div class="analysis-fill fill-green" id="barHold"></div></div>
+            <span class="analysis-value" id="valHold">—</span>
+          </div>
+          <div class="analysis-row">
+            <span class="analysis-label">Volume</span>
+            <div class="analysis-bar"><div class="analysis-fill fill-blue" id="barVol"></div></div>
+            <span class="analysis-value" id="valVol">—</span>
+          </div>
+          <div class="analysis-row">
+            <span class="analysis-label">Safety</span>
+            <div class="analysis-bar"><div class="analysis-fill fill-yellow" id="barSafe"></div></div>
+            <span class="analysis-value" id="valSafe">—</span>
+          </div>
+        </div>
+
+        <div class="token-signals">
+          <div class="signals-title">On-Chain Signals</div>
+          <div class="signals-grid" id="resSignals"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Empty state -->
+  <div class="scanner-empty" id="empty">
+    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+    <p>Paste a Solana CA above to start scanning</p>
+  </div>
+</div>
+
+<script src="app.js"></script>
+<script>
+// Scanner Logic
+const DEMO_TOKENS = {
+  'So11111111111111111111111111111111111111112': {
+    symbol: 'SOL', name: 'Wrapped SOL', price: 168.42, liquidity: 89200000, mcap: 78500000000, holders: 1247893, volume: 2400000000, change: 3.2,
+    liqScore: 95, holdScore: 98, volScore: 92, safeScore: 96,
+    risk: 'LOW', riskClass: 'risk-low',
+    signals: [
+      { type: 'good', text: '✓ Liquidity locked' },
+      { type: 'good', text: '✓ Renounced contract' },
+      { type: 'good', text: '✓ No mint authority' },
+      { type: 'info', text: 'ℹ Top 10 holders: 12%' },
+    ]
+  },
+  'DezXAZ8z7PnrnRJjz3wXBoRgixCa6xjnB7YaB1pPB263': {
+    symbol: 'BONK', name: 'Bonk', price: 0.00001247, liquidity: 42000000, mcap: 980000000, holders: 892341, volume: 450000000, change: -2.1,
+    liqScore: 88, holdScore: 85, volScore: 90, safeScore: 82,
+    risk: 'LOW', riskClass: 'risk-low',
+    signals: [
+      { type: 'good', text: '✓ Liquidity locked 100%' },
+      { type: 'good', text: '✓ Renounced' },
+      { type: 'info', text: 'ℹ Top 10 holders: 18%' },
+      { type: 'warn', text: '⚠ High volatility' },
+    ]
+  },
+  'JUPyiwrYJFskUPiHa7hkeR8VUtAeFoSYbKedZNsDvCN': {
+    symbol: 'JUP', name: 'Jupiter', price: 0.892, liquidity: 120000000, mcap: 1200000000, holders: 456789, volume: 89000000, change: 5.7,
+    liqScore: 92, holdScore: 80, volScore: 75, safeScore: 94,
+    risk: 'LOW', riskClass: 'risk-low',
+    signals: [
+      { type: 'good', text: '✓ DEX aggregator' },
+      { type: 'good', text: '✓ Audited contract' },
+      { type: 'good', text: '✓ Liquidity locked' },
+      { type: 'info', text: 'ℹ Top 10 holders: 22%' },
+    ]
+  }
+};
+
+// Generate random token for unknown CAs
+function generateRandomToken(ca) {
+  const hash = ca.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  const symbols = ['MOON', 'DOGE', 'PEPE', 'CHAD', 'WOJAK', 'FROG', 'CAT', 'SOL', 'BASED', 'APED'];
+  const symIdx = hash % symbols.length;
+  const price = (Math.random() * 0.01).toFixed(8);
+  const liq = Math.floor(Math.random() * 500000) + 10000;
+  const holders = Math.floor(Math.random() * 500) + 10;
+  const vol = Math.floor(Math.random() * 100000);
+  const change = (Math.random() * 40 - 20).toFixed(1);
+  const liqScore = Math.floor(Math.random() * 60) + 20;
+  const holdScore = Math.floor(Math.random() * 60) + 20;
+  const volScore = Math.floor(Math.random() * 60) + 20;
+  const safeScore = Math.floor(Math.random() * 50) + 15;
+  
+  const risk = safeScore > 60 ? 'LOW' : safeScore > 35 ? 'MEDIUM' : 'HIGH';
+  const riskClass = safeScore > 60 ? 'risk-low' : safeScore > 35 ? 'risk-medium' : 'risk-high';
+  
+  const signals = [];
+  if (safeScore > 50) signals.push({ type: 'good', text: '✓ Liquidity detected' });
+  if (safeScore > 40) signals.push({ type: 'info', text: `ℹ ${holders} holders` });
+  if (safeScore <= 50) signals.push({ type: 'warn', text: '⚠ Low liquidity' });
+  if (safeScore <= 35) signals.push({ type: 'bad', text: '✗ High risk detected' });
+  if (safeScore <= 25) signals.push({ type: 'bad', text: '✗ Possible honeypot' });
+  if (liqScore > 70) signals.push({ type: 'good', text: '✓ Good liquidity' });
+  if (volScore > 60) signals.push({ type: 'info', text: 'ℹ Active trading' });
+  
+  return {
+    symbol: symbols[symIdx] + (hash % 100), name: 'Unknown Token', price: parseFloat(price),
+    liquidity: liq, mcap: liq * (Math.random() * 10 + 2), holders, volume: vol,
+    change: parseFloat(change), liqScore, holdScore, volScore, safeScore,
+    risk, riskClass, signals
+  };
+}
+
+function formatNum(n) {
+  if (n >= 1e9) return '$' + (n / 1e9).toFixed(2) + 'B';
+  if (n >= 1e6) return '$' + (n / 1e6).toFixed(2) + 'M';
+  if (n >= 1e3) return '$' + (n / 1e3).toFixed(1) + 'K';
+  if (n >= 1) return '$' + n.toFixed(2);
+  return '$' + n.toFixed(8);
+}
+
+function formatPrice(p) {
+  if (p >= 1) return '$' + p.toFixed(2);
+  if (p >= 0.0001) return '$' + p.toFixed(6);
+  return '$' + p.toFixed(10);
+}
+
+let currentCA = '';
+
+async function scanToken() {
+  const input = document.getElementById('caInput');
+  const ca = input.value.trim();
+  if (!ca || ca.length < 30) {
+    input.focus();
+    input.style.borderColor = 'var(--red)';
+    setTimeout(() => input.style.borderColor = '', 1000);
+    return;
+  }
+
+  currentCA = ca;
+  const btn = document.getElementById('scanBtn');
+  btn.disabled = true;
+  document.getElementById('empty').style.display = 'none';
+  document.getElementById('results').classList.remove('active');
+  document.getElementById('loading').classList.add('active');
+
+  // Simulate analysis delay
+  await new Promise(r => setTimeout(r, 2500));
+
+  // Get token data
+  const data = DEMO_TOKENS[ca] || generateRandomToken(ca);
+
+  // Render results
+  document.getElementById('resSymbol').textContent = '$' + data.symbol;
+  document.getElementById('resAddress').textContent = ca.slice(0, 8) + '...' + ca.slice(-8);
+  document.getElementById('resRisk').textContent = data.risk + ' RISK';
+  document.getElementById('resRisk').className = 'token-risk ' + data.riskClass;
+  document.getElementById('resPrice').textContent = formatPrice(data.price);
+  document.getElementById('resLiquidity').textContent = formatNum(data.liquidity);
+  document.getElementById('resMcap').textContent = formatNum(data.mcap);
+  document.getElementById('resHolders').textContent = data.holders.toLocaleString();
+  document.getElementById('resVolume').textContent = formatNum(data.volume);
+  
+  const changeEl = document.getElementById('resChange');
+  changeEl.textContent = (data.change >= 0 ? '+' : '') + data.change + '%';
+  changeEl.className = 'metric-value ' + (data.change >= 0 ? 'green' : 'red');
+
+  // Animate bars
+  setTimeout(() => {
+    document.getElementById('barLiq').style.width = data.liqScore + '%';
+    document.getElementById('barHold').style.width = data.holdScore + '%';
+    document.getElementById('barVol').style.width = data.volScore + '%';
+    document.getElementById('barSafe').style.width = data.safeScore + '%';
+  }, 100);
+
+  document.getElementById('valLiq').textContent = data.liqScore + '%';
+  document.getElementById('valHold').textContent = data.holdScore + '%';
+  document.getElementById('valVol').textContent = data.volScore + '%';
+  document.getElementById('valSafe').textContent = data.safeScore + '%';
+
+  // Signals
+  const signalsHtml = data.signals.map(s =>
+    `<div class="signal signal-${s.type}">${s.text}</div>`
+  ).join('');
+  document.getElementById('resSignals').innerHTML = signalsHtml;
+
+  document.getElementById('loading').classList.remove('active');
+  document.getElementById('results').classList.add('active');
+  btn.disabled = false;
+}
+
+function copyAddress() {
+  if (currentCA) {
+    navigator.clipboard.writeText(currentCA).catch(() => {});
+  }
+}
+
+// Enter key
+document.getElementById('caInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') scanToken();
+});
+</script>
+</body>
+</html>
